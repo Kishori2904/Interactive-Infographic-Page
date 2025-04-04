@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Missions: Interactive Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #0a0a1a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .navigation {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .navigation a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 20px;
+            font-size: 18px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .navigation a:hover {
+            color: #64ffda;
+        }
+        
+        .navigation a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: #64ffda;
+            transition: width 0.3s ease;
+        }
+        
+        .navigation a:hover::after {
+            width: 100%;
+        }
+        
+        header {
+            height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(10, 10, 26, 0.9), rgba(10, 10, 26, 0.7));
+        }
+        
+        #stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .title {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 1s ease forwards;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 1s ease forwards 0.5s;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .mission-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .filter-options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background-color: rgba(25, 25, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background-color: #64ffda;
+            color: #0a0a1a;
+        }
+
+        .missions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .mission-card {
+            background: rgba(25, 25, 45, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0;
+            transform: translateY(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mission-card.visible {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mission-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .mission-image {
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mission-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .mission-card:hover .mission-image img {
+            transform: scale(1.1);
+        }
+
+        .mission-category {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 15px;
+            background-color: rgba(100, 255, 218, 0.9);
+            color: #0a0a1a;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .mission-content {
+            padding: 25px;
+        }
+
+        .mission-title {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #64ffda;
+        }
+
+        .mission-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .mission-description {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .mission-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .view-more {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .view-more:hover {
+            background-color: #64ffda;
+            color: #0a0a1a;
+        }
+
+        .mission-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mission-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(15, 15, 35, 0.95);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .mission-modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #64ffda;
+        }
+
+        .modal-subtitle {
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-details {
+            line-height: 1.8;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #64ffda;
+        }
+
+        .mission-timeline {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .mission-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #64ffda;
+        }
+
+        .timeline-event {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #64ffda;
+        }
+
+        .timeline-date {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .mission-stats-detailed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-detailed {
+            background: rgba(25, 25, 45, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-detailed .stat-value {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            width: calc(100% / 5 - 20px);
+            background: linear-gradient(to top, #64ffda, #64a0ff);
+            border-radius: 5px 5px 0 0;
+            transition: height 1s ease;
+        }
+
+        .chart-label {
+            position: absolute;
+            bottom: -30px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #aaa;
+            width: calc(100% / 5);
+            transform: translateX(-50%);
+        }
+
+        .discover-more {
+            text-align: center;
+            margin: 70px 0;
+        }
+
+        .discover-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .discover-description {
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        .back-to-home {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #64ffda;
+            color: #0a0a1a;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-home:hover {
+            background-color: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(100, 255, 218, 0.4);
+        }
+
+        footer {
+            background-color: rgba(10, 10, 26, 0.95);
+            padding: 50px 0;
+            text-align: center;
+        }
+        
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .footer-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+        
+        .footer-content p {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .social-link {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #1a1a2a;
+            color: #fff;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: #64ffda;
+            color: #0a0a1a;
+            transform: translateY(-5px);
+        }
+        
+        .copyright {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        @media (max-width: 991px) {
+            .missions-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+            
+            .title {
+                font-size: 2.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .missions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mission-stats-detailed {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .title {
+                font-size: 2.3rem;
+            }
+            
+            .navigation a {
+                font-size: 16px;
+                margin: 0 10px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .mission-stats-detailed {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+        <a href="index.html">Home</a>
+        <a href="index.html#timeline">Timeline</a>
+        <a href="index.html#planets">Planets</a>
+        <a href="index.html#cosmic">Deep Space</a>
+        <a href="#" class="active">Missions</a>
+    </div>
+    
+    <header>
+        <canvas id="stars"></canvas>
+        <h1 class="title">Space Missions Explorer</h1>
+        <p class="subtitle">Discover the most groundbreaking missions that have expanded our understanding of the cosmos, from robotic explorers to human expeditions.</p>
+    </header>
+    
+    <main class="mission-container">
+        <div class="filter-options">
+            <button class="filter-btn active" data-filter="all">All Missions</button>
+            <button class="filter-btn" data-filter="moon">Moon</button>
+            <button class="filter-btn" data-filter="mars">Mars</button>
+            <button class="filter-btn" data-filter="solar-system">Solar System</button>
+            <button class="filter-btn" data-filter="telescope">Space Telescopes</button>
+            <button class="filter-btn" data-filter="human">Human Spaceflight</button>
+        </div>
+        
+        <div class="missions-grid">
+            <!-- Moon Missions -->
+            <div class="mission-card" data-category="moon">
+                <div class="mission-image">
+                    <img src="./assest/lor_decision_8_apollo_11_launch_s69-39529.webp" alt="Apollo 11">
+                    <span class="mission-category">Moon</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">Apollo 11</h2>
+                    <div class="mission-details">
+                        <span>Launch: July 16, 1969</span>
+                        <span>NASA</span>
+                    </div>
+                    <p class="mission-description">The historic mission that made Neil Armstrong and Buzz Aldrin the first humans to walk on the lunar surface.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Mission Days</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">2.5</div>
+                            <div class="stat-label">Hours on Moon</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">21.5</div>
+                            <div class="stat-label">Kg of Samples</div>
+                        </div>
+                    </div>
+                    <a href="#" class="view-more" data-mission="apollo11">View Details</a>
+                </div>
+            </div>
+            
+            <div class="mission-card" data-category="moon">
+                <div class="mission-image">
+                    <img src="./assest/block1_night_mf_bkdrop_adj_0_1.webp" alt="Artemis Program">
+                    <span class="mission-category">Moon</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">Artemis Program</h2>
+                    <div class="mission-details">
+                        <span>2022 - Present</span>
+                        <span>NASA & Partners</span>
+                    </div>
+                    <p class="mission-description">A series of missions aiming to return humans to the Moon, establish sustainable lunar exploration, and prepare for Mars missions.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">3+</div>
+                            <div class="stat-label">Planned Missions</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">2025</div>
+                            <div class="stat-label">Landing Goal</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">6+</div>
+                            <div class="stat-label">Astronauts</div>
+                        </div>
+                    </div>
+                    <a href="#" class="view-more" data-mission="artemis">View Details</a>
+                </div>
+            </div>
+            
+            <!-- Mars Missions -->
+            <div class="mission-card" data-category="mars">
+                <div class="mission-image">
+                    <img src="./assest/images (1).jpg" alt="Perseverance Rover">
+                    <span class="mission-category">Mars</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">Perseverance Rover</h2>
+                    <div class="mission-details">
+                        <span>Launch: July 30, 2020</span>
+                        <span>NASA</span>
+                    </div>
+                    <p class="mission-description">The most advanced rover ever sent to Mars, searching for signs of ancient microbial life and collecting samples for future return to Earth.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">7</div>
+                            <div class="stat-label">Instruments</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">40+</div>
+                            <div class="stat-label">Samples Collected</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">1</div>
+                            <div class="stat-label">Helicopter</div>
+                        </div>
+                    </div>
+                    <a href="#" class="view-more" data-mission="perseverance">View Details</a>
+                </div>
+            </div>
+            
+            <div class="mission-card" data-category="mars">
+                <div class="mission-image">
+                    <img src="./assest/jpegPIA25277.jpg" alt="Mars Sample Return">
+                    <span class="mission-category">Mars</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">Mars Sample Return</h2>
+                    <div class="mission-details">
+                        <span>Planned: 2026-2031</span>
+                        <span>NASA & ESA</span>
+                    </div>
+                    <p class="mission-description">An ambitious mission to collect samples of Martian rock and soil and return them to Earth for detailed analysis.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">30+</div>
+                            <div class="stat-label">Samples Target</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">2031</div>
+                            <div class="stat-label">Return Date</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">Mission Stages</div>
+                        </div>
+                    </div>
+                    <a href="#" class="view-more" data-mission="msr">View Details</a>
+                </div>
+            </div>
+            
+            <!-- Solar System Missions -->
+            <div class="mission-card" data-category="solar-system">
+                <div class="mission-image">
+                    <img src="./assest/Voyager.jpg" alt="Voyager">
+                    <span class="mission-category">Solar System</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">Voyager Program</h2>
+                    <div class="mission-details">
+                        <span>Launch: 1977</span>
+                        <span>NASA</span>
+                    </div>
+                    <p class="mission-description">Twin spacecraft that conducted a grand tour of the outer planets and became the first human-made objects to enter interstellar space.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">45+</div>
+                            <div class="stat-label">Years Active</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">23B</div>
+                            <div class="stat-label">Km From Earth</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">4</div>
+                            <div class="stat-label">Planets Visited</div>
+                        </div>
+                    </div>
+                    <a href="#" class="view-more" data-mission="voyager">View Details</a>
+                </div>
+            </div>
+            
+            <div class="mission-card" data-category="solar-system">
+                <div class="mission-image">
+                    <img src="./assest/imagesftgyuhjikopl.jpg" alt="Europa Clipper">
+                    <span class="mission-category">Solar System</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">Europa Clipper</h2>
+                    <div class="mission-details">
+                        <span>Launch: 2024</span>
+                        <span>NASA</span>
+                    </div>
+                    <p class="mission-description">A mission to investigate Jupiter's moon Europa, which may contain subsurface liquid water and conditions suitable for life.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">9</div>
+                            <div class="stat-label">Instruments</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">44</div>
+                            <div class="stat-label">Flybys Planned</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">2030</div>
+                            <div class="stat-label">Arrival Year</div>
+                        </div>
+                    </div>
+                    <a href="#" class="view-more" data-mission="europa">View Details</a>
+                </div>
+            </div>
+            
+            <!-- Space Telescopes -->
+            <div class="mission-card" data-category="telescope">
+                <div class="mission-image">
+                    <img src="./assest/webb-flickr-52259221868-30e1c78f0c-4k-jpg.webp" alt="James Webb Space Telescope">
+                    <span class="mission-category">Telescope</span>
+                </div>
+                <div class="mission-content">
+                    <h2 class="mission-title">James Webb Space Telescope</h2>
+                    <div class="mission-details">
+                        <span>Launch: December 25, 2021</span>
+                        <span>NASA, ESA, CSA</span>
+                    </div>
+                    <p class="mission-description">The largest, most powerful space telescope ever built, designed to observe the earliest galaxies and stars in the universe.</p>
+                    <div class="mission-stats">
+                        <div class="stat">
+                            <div class="stat-value">6.5m</div>
+                            <div class="stat-label">Mirror Size</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">10B+</div>
+                            <div class="stat-label">Cost (USD)</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">20+</div>
+                                <div class="stat">
+                                    <div class="stat-value">20+</div>
+                                    <div class="stat-label">Years Lifespan</div>
+                                </div>
+                            </div>
+                            <a href="#" class="view-more" data-mission="jwst">View Details</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mission-card" data-category="telescope">
+                        <div class="mission-image">
+                            <img src="./assest/hubble.webp" alt="Hubble Space Telescope">
+                            <span class="mission-category">Telescope</span>
+                        </div>
+                        <div class="mission-content">
+                            <h2 class="mission-title">Hubble Space Telescope</h2>
+                            <div class="mission-details">
+                                <span>Launch: April 24, 1990</span>
+                                <span>NASA & ESA</span>
+                            </div>
+                            <p class="mission-description">Revolutionary space telescope that has transformed our understanding of the universe with its stunning images and discoveries.</p>
+                            <div class="mission-stats">
+                                <div class="stat">
+                                    <div class="stat-value">2.4m</div>
+                                    <div class="stat-label">Mirror Size</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">30+</div>
+                                    <div class="stat-label">Years Active</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">1.5M+</div>
+                                    <div class="stat-label">Observations</div>
+                                </div>
+                            </div>
+                            <a href="#" class="view-more" data-mission="hubble">View Details</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Human Spaceflight -->
+                    <div class="mission-card" data-category="human">
+                        <div class="mission-image">
+                            <img src="./assest/jsc2021e064215_alt~large.jpg" alt="International Space Station">
+                            <span class="mission-category">Human</span>
+                        </div>
+                        <div class="mission-content">
+                            <h2 class="mission-title">International Space Station</h2>
+                            <div class="mission-details">
+                                <span>Assembly: 1998-2011</span>
+                                <span>Multiple Agencies</span>
+                            </div>
+                            <p class="mission-description">The largest modular space station in low Earth orbit, serving as a microgravity and space environment research laboratory and living space.</p>
+                            <div class="mission-stats">
+                                <div class="stat">
+                                    <div class="stat-value">20+</div>
+                                    <div class="stat-label">Years Inhabited</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">250+</div>
+                                    <div class="stat-label">Astronauts</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">3000+</div>
+                                    <div class="stat-label">Experiments</div>
+                                </div>
+                            </div>
+                            <a href="#" class="view-more" data-mission="iss">View Details</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mission-card" data-category="human">
+                        <div class="mission-image">
+                            <img src="./assest/Dragon_Carousel_0007_2-0aa00b4.jpg" alt="SpaceX Crew Dragon">
+                            <span class="mission-category">Human</span>
+                        </div>
+                        <div class="mission-content">
+                            <h2 class="mission-title">SpaceX Crew Dragon</h2>
+                            <div class="mission-details">
+                                <span>First Crewed: May 30, 2020</span>
+                                <span>SpaceX</span>
+                            </div>
+                            <p class="mission-description">The first commercial spacecraft to deliver astronauts to the International Space Station, marking a new era in human spaceflight.</p>
+                            <div class="mission-stats">
+                                <div class="stat">
+                                    <div class="stat-value">10+</div>
+                                    <div class="stat-label">Crewed Missions</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">30+</div>
+                                    <div class="stat-label">Astronauts</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">7</div>
+                                    <div class="stat-label">Seats Capacity</div>
+                                </div>
+                            </div>
+                            <a href="#" class="view-more" data-mission="crew-dragon">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <div class="discover-more">
+                <h2 class="discover-title">The Journey Continues</h2>
+                <p class="discover-description">Explore our comprehensive guide to the cosmos, from planetary science to astrophysics and the search for extraterrestrial life.</p>
+                <a href="index.html" class="back-to-home">Back to Main Explorer</a>
+            </div>
+            
+            <!-- Mission Details Modals -->
+            <div class="mission-modal" id="apollo11-modal">
+                <div class="modal-content">
+                    <button class="close-modal">&times;</button>
+                    <div class="modal-header">
+                        <h2 class="modal-title">Apollo 11 Mission</h2>
+                        <p class="modal-subtitle">The First Human Landing on the Moon</p>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-image">
+                            <img src="./assest/lor_decision_8_apollo_11_launch_s69-39529.webp" alt="Apollo 11 Mission">
+                        </div>
+                        <div class="modal-details">
+                            <div class="modal-section">
+                                <h3 class="modal-section-title">Mission Overview</h3>
+                                <p>Apollo 11 was the spaceflight that first landed humans on the Moon. Commander Neil Armstrong and lunar module pilot Buzz Aldrin formed the American crew that landed the Apollo Lunar Module Eagle on July 20, 1969. Armstrong became the first person to step onto the lunar surface six hours and 39 minutes later; Aldrin joined him 19 minutes later.</p>
+                                <p>They spent about two and a quarter hours together outside the spacecraft, and collected 47.5 pounds (21.5 kg) of lunar material to bring back to Earth. Command module pilot Michael Collins flew the Command Module Columbia alone in lunar orbit while they were on the Moon's surface.</p>
+                            </div>
+                            
+                            <div class="mission-stats-detailed">
+                                <div class="stat-detailed">
+                                    <div class="stat-value">8d 3h 18m</div>
+                                    <div class="stat-label">Mission Duration</div>
+                                </div>
+                                <div class="stat-detailed">
+                                    <div class="stat-value">21.5 kg</div>
+                                    <div class="stat-label">Lunar Samples</div>
+                                </div>
+                                <div class="stat-detailed">
+                                    <div class="stat-value">2h 31m</div>
+                                    <div class="stat-label">EVA Duration</div>
+                                </div>
+                                <div class="stat-detailed">
+                                    <div class="stat-value">3</div>
+                                    <div class="stat-label">Crew Members</div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-section">
+                                <h3 class="modal-section-title">Mission Timeline</h3>
+                                <div class="mission-timeline">
+                                    <div class="timeline-event">
+                                        <div class="timeline-date">July 16, 1969</div>
+                                        <p>Launch from Kennedy Space Center, Florida</p>
+                                    </div>
+                                    <div class="timeline-event">
+                                        <div class="timeline-date">July 19, 1969</div>
+                                        <p>Apollo 11 enters lunar orbit</p>
+                                    </div>
+                                    <div class="timeline-event">
+                                        <div class="timeline-date">July 20, 1969</div>
+                                        <p>Eagle lunar module lands at Sea of Tranquility</p>
+                                    </div>
+                                    <div class="timeline-event">
+                                        <div class="timeline-date">July 20, 1969</div>
+                                        <p>Neil Armstrong becomes first human to walk on the Moon</p>
+                                    </div>
+                                    <div class="timeline-event">
+                                        <div class="timeline-date">July 21, 1969</div>
+                                        <p>Eagle ascent stage rejoins Columbia in lunar orbit</p>
+                                    </div>
+                                    <div class="timeline-event">
+                                        <div class="timeline-date">July 24, 1969</div>
+                                        <p>Splashdown in the Pacific Ocean</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-section">
+                                <h3 class="modal-section-title">Legacy</h3>
+                                <p>Apollo 11 effectively ended the Space Race and fulfilled a national goal proposed by President John F. Kennedy in 1961: "before this decade is out, of landing a man on the Moon and returning him safely to the Earth."</p>
+                                <p>The mission laid the groundwork for all future lunar exploration missions and represents one of humanity's greatest technological achievements. The landing site at the Sea of Tranquility is now a historical landmark and protected site.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- More modal details for other missions would go here -->
+            
+            <footer>
+                <div class="footer-content">
+                    <h3>Space Explorer Project</h3>
+                    <p>Join us on a journey through the cosmos as we explore the wonders of our universe.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">FB</a>
+                        <a href="#" class="social-link">TW</a>
+                        <a href="#" class="social-link">IG</a>
+                        <a href="#" class="social-link">YT</a>
+                    </div>
+                    <div class="copyright">
+                        &copy; 2025 Space Explorer Project. All rights reserved.
+                    </div>
+                </div>
+            </footer>
+            
+            <script>
+                // Star background animation
+                const canvas = document.getElementById('stars');
+                const ctx = canvas.getContext('2d');
+                let stars = [];
+                
+                function initCanvas() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    createStars();
+                }
+                
+                function createStars() {
+                    stars = [];
+                    const density = 100;
+                    
+                    for (let i = 0; i < density; i++) {
+                        stars.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            radius: Math.random() * 2,
+                            vx: Math.floor(Math.random() * 50) - 25,
+                            vy: Math.floor(Math.random() * 50) - 25
+                        });
+                    }
+                }
+                
+                function drawStars() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.globalCompositeOperation = 'lighter';
+                    
+                    for (let i = 0; i < stars.length; i++) {
+                        const s = stars[i];
+                        
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        s.x += s.vx / 100;
+                        s.y += s.vy / 100;
+                        
+                        if (s.x < 0 || s.x > canvas.width) s.vx = -s.vx;
+                        if (s.y < 0 || s.y > canvas.height) s.vy = -s.vy;
+                    }
+                }
+                
+                // Animation loop
+                function animate() {
+                    drawStars();
+                    requestAnimationFrame(animate);
+                }
+                
+                // Mission cards animations
+                function checkVisible() {
+                    const cards = document.querySelectorAll('.mission-card');
+                    cards.forEach(card => {
+                        const rect = card.getBoundingClientRect();
+                        const isVisible = (rect.top <= window.innerHeight * 0.8);
+                        
+                        if (isVisible && !card.classList.contains('visible')) {
+                            card.classList.add('visible');
+                        }
+                    });
+                }
+                
+                // Filter functionality
+                function setupFilters() {
+                    const filterBtns = document.querySelectorAll('.filter-btn');
+                    const cards = document.querySelectorAll('.mission-card');
+                    
+                    filterBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            // Update active button
+                            filterBtns.forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            
+                            const filter = btn.getAttribute('data-filter');
+                            
+                            // Filter cards
+                            cards.forEach(card => {
+                                card.classList.remove('visible');
+                                
+                                if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                                    setTimeout(() => {
+                                        card.style.display = 'block';
+                                        setTimeout(() => {
+                                            card.classList.add('visible');
+                                        }, 10);
+                                    }, 300);
+                                } else {
+                                    card.classList.remove('visible');
+                                    setTimeout(() => {
+                                        card.style.display = 'none';
+                                    }, 300);
+                                }
+                            });
+                        });
+                    });
+                }
+                
+                // Modal functionality
+                function setupModals() {
+                    const viewBtns = document.querySelectorAll('.view-more');
+                    const closeBtns = document.querySelectorAll('.close-modal');
+                    
+                    viewBtns.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const missionId = btn.getAttribute('data-mission');
+                            const modal = document.getElementById(`${missionId}-modal`);
+                            
+                            if (modal) {
+                                modal.classList.add('active');
+                                document.body.style.overflow = 'hidden';
+                            }
+                        });
+                    });
+                    
+                    closeBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const modal = btn.closest('.mission-modal');
+                            modal.classList.remove('active');
+                            document.body.style.overflow = 'auto';
+                        });
+                    });
+                    
+                    // Close modal when clicking outside content
+                    document.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('mission-modal')) {
+                            e.target.classList.remove('active');
+                            document.body.style.overflow = 'auto';
+                        }
+                    });
+                }
+                
+                // Initialize everything
+                window.addEventListener('load', () => {
+                    initCanvas();
+                    animate();
+                    setupFilters();
+                    setupModals();
+                    
+                    // Check for visible cards on scroll
+                    window.addEventListener('scroll', checkVisible);
+                    // Initial check
+                    checkVisible();
+                });
+                
+                // Handle resize
+                window.addEventListener('resize', initCanvas);
+            </script>
+        </body>
+        </html>
